@@ -18,39 +18,10 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import InboxIcon from '@mui/icons-material/MoveToInbox';
 import MailIcon from '@mui/icons-material/Mail';
-import { DataGrid } from '@mui/x-data-grid';
 import { Select, MenuItem, TextField } from '@mui/material';
+import { SaleOrder } from './SaleOrder';
 
-const columns = [
-  { field: 'id', headerName: 'ID', width: 70 },
-  { field: 'Customer', headerName: 'Customer', width: 130 },
-  { field: 'OrderDate', headerName: 'Order Date', width: 130 },
-  { field: 'TotalPrice', headerName: 'Total Price', width: 130 },
-  { field: 'ShippingDate', headerName: 'Shipping Date', width: 130 },
-  { field: 'ReceiveDate', headerName: 'Receive Date', width: 130 },
-  { field: 'StaffID', headerName: 'Staff ID', width: 130 },
-  { field: 'ShipperID', headerName: 'Shipper ID', width: 130 },
-  {
-    field: 'Status',
-    headerName: 'Status',
-    width: 160,
-    renderCell: (params) => (
-      <Select
-        value={params.value || 'PROCESSING'}
-        onChange={(event) => handleStatusChange(params.id, event.target.value)}
-        fullWidth
-      >
-        <MenuItem value="PROCESSING">PROCESSING</MenuItem>
-        <MenuItem value="ACCEPTED">ACCEPTED</MenuItem>
-        <MenuItem value="DELIVERING">DELIVERING</MenuItem>
-        <MenuItem value="DELIVERED">DELIVERED</MenuItem>
-        <MenuItem value="CANCELED">CANCELED</MenuItem>
-      </Select>
-    )
-  }
 
-  
-];
 
 
 
@@ -128,14 +99,9 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 );
 
 export default function SaleStaffPage() {
+  
   const [rows, setRows] = React.useState(initialRows);
-
   const [searchDate, setSearchDate] = React.useState('');
-
-  const handleSearchChange = (event) => {
-    setSearchDate(event.target.value);
-  };
-
   const filteredRows = rows.filter((row) => {
     return row.OrderDate.includes(searchDate);
   });
@@ -172,7 +138,7 @@ export default function SaleStaffPage() {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div">
-            Orders
+            Sale Orders
           </Typography>
         </Toolbar>
       </AppBar>
@@ -235,27 +201,7 @@ export default function SaleStaffPage() {
       </Drawer>
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
         <DrawerHeader />
-        <div style={{ height: 500, width: '100%' }}>
-      <Box sx={{ mb: 2 }}>
-        <TextField
-          label="Search by Order Date"
-          variant="outlined"
-          value={searchDate}
-          onChange={handleSearchChange}
-        />
-      </Box>
-      <DataGrid
-        rows={filteredRows}
-        columns={columns}
-        initialState={{
-          pagination: {
-            paginationModel: { page: 0, pageSize: 5 },
-          },
-        }}
-        pageSizeOptions={[5, 10]}
-        checkboxSelection
-      />
-    </div>
+            <SaleOrder />
       </Box>
     </Box>
   );

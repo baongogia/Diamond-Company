@@ -7,6 +7,7 @@ import ManagerPage from "./Components/Role/Manager/ManagerPage";
 import SaleStaffPage from "./Components/Role/SaleStaff/SaleStaffPage";
 import Hide from "./Components/Hide";
 import ManageListProduct from "./Components/Role/Admin/ManageListProduct";
+import { StaffActionProvider }  from "./Components/Role/SaleStaff/StaffActionProvider";
 
 function App() {
   return (
@@ -14,14 +15,15 @@ function App() {
       <Hide>
         <LoginPage />
       </Hide>
-
-      <Routes>
-        <Route path="/AdminPage" element={<AdminPage />} />
-        <Route path="/DeliStaffPage" element={<DeliStaffPage />} />
-        <Route path="/ManagerPage" element={<ManagerPage />} />
-        <Route path="/SaleStaffPage" element={<SaleStaffPage />} />
-        <Route path="/ManageListProduct" element={<ManageListProduct />} />
-      </Routes>
+      <StaffActionProvider>
+        <Routes>
+          <Route path="/AdminPage" element={<AdminPage />} />
+          <Route path="/DeliStaffPage" element={<DeliStaffPage />} />
+          <Route path="/ManagerPage" element={<ManagerPage />} />
+          <Route path="/SaleStaffPage" element={<SaleStaffPage />} />
+          <Route path="/ManageListProduct" element={<ManageListProduct />} />
+        </Routes>
+      </StaffActionProvider>
     </>
   );
 }

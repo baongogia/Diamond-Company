@@ -1,134 +1,187 @@
-import React, { useState } from "react";
-import { Stepper, Step, StepLabel } from "@mui/material";
+import React, { useState, useContext, useEffect } from 'react';
+import Box from '@mui/material/Box';
+import { DataGrid } from '@mui/x-data-grid';
+import { Select, MenuItem, TextField, Button } from '@mui/material';
+import { StaffActionContext } from '../SaleStaff/StaffActionProvider';
 
-function CustomStepIcon({ active, completed, icon }) {
-  const icons = {
-    1: <ion-icon name="bag-outline"></ion-icon>,
-    2: <ion-icon name="bag-check-outline"></ion-icon>,
-    3: <ion-icon name="airplane-outline"></ion-icon>,
-    4: <ion-icon name="checkmark-done-circle-outline"></ion-icon>,
-  };
-  return (
-    <div
-      className={`border-[0.1em] border-green-700 p-3 w-10 h-10 flex justify-center items-center -translate-y-2 rounded-full ${
-        active ? "bg-green-500 text-white" : "bg-search text-green-500"
-      } ${completed ? "completed" : ""}`}
-    >
-      {completed ? finishIcon : icons[String(icon)]}
-    </div>
-  );
-}
-const steps = ["Order", "Confirm", "Delivering", "Received"];
-const finishIcon = <ion-icon name="checkmark-circle-outline"></ion-icon>;
-function DeliveryProgress({ activeStep }) {
-  return (
-    <div>
-      <Stepper activeStep={activeStep} alternativeLabel>
-        {steps.map((label) => (
-          <Step key={label}>
-            <StepLabel
-              sx={{
-                ".MuiStepLabel-label": {
-                  fontFamily: "SF Mono",
-                  color: "white",
-                  "&.Mui-active": {
-                    color: "green", // Active
-                  },
-                  "&.Mui-completed": {
-                    color: "gray",
-                  },
-                },
-              }}
-              StepIconComponent={CustomStepIcon}
-            >
-              {label}
-            </StepLabel>
-          </Step>
-        ))}
-      </Stepper>
-      <div>
-        {activeStep === steps.length ? (
-          <div className="flex items-center">
-            <div className="translate-x-9 mt-5">Delivery is complete</div>
-            <div className="translate-x-9 translate-y-3 ml-2 text-yellow-500">
-              <ion-icon name="star"></ion-icon>
-            </div>
-          </div>
-        ) : (
-          <div className=""></div>
-        )}
-      </div>
-    </div>
-  );
-}
-export default function Order() {
-  const [order, setOrder] = React.useState(false);
-  const [details, setDetails] = React.useState(false);
-  const [activeStep, setActiveStep] = useState(0);
+export const Order = () => {
+  const { confirmedOrders, setConfirmedOrders } = useContext(StaffActionContext);
 
-  const handleNext = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep + 1);
+  // Function to check if an order is confirmed
+  useEffect(() => {
+    const storedConfirmedOrders = localStorage.getItem('confirmedOrders');
+    if (storedConfirmedOrders) {
+      setConfirmedOrders(JSON.parse(storedConfirmedOrders));
+    }
+  }, []);
+
+  const isOrderConfirmed = (orderId) => confirmedOrders.includes(orderId);
+
+  console.log(confirmedOrders)
+
+  const columns = [
+    { field: 'id', headerName: 'ID', width: 70 },
+    { field: 'Customer', headerName: 'Customer', width: 130 },
+    { field: 'OrderDate', headerName: 'Order Date', width: 130 },
+    { field: 'TotalPrice', headerName: 'Total Price', width: 130 },
+    { field: 'StaffID', headerName: 'Staff ID', width: 130 },
+    {
+      field: 'OrderStatus',
+      headerName: 'Order Status',
+      width: 160,
+      renderCell: (params) => (
+        <Select
+          value={params.value || 'Processing'} // Default value is 'Processing'
+          onChange={(event) => handleStatusChange(params.id, event.target.value)}
+          fullWidth
+        >
+          <MenuItem value="Processing">Processing</MenuItem>
+          <MenuItem value="Shipping">Shipping</MenuItem>
+          <MenuItem value="Shipped">Shipped</MenuItem>
+          <MenuItem value="Cancelled">Cancelled</MenuItem>
+        </Select>
+      )
+    },
+    {
+      field: 'action',
+      headerName: 'Action',
+      width: 200,
+      renderCell: (params) => (
+        <div>
+          {params.row.OrderStatus === 'Processing' && (
+            <>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => handleConfirmOrder(params.id)}
+                disabled={!isOrderConfirmed(params.id)}
+                style={{ marginRight: '10px' }}
+              >
+                Confirm
+              </Button>
+              <Button
+                variant="contained"
+                color="secondary"
+                disabled={!isOrderConfirmed(params.id)}
+                onClick={() => handleCancelOrder(params.id)}
+              >
+                Cancel
+              </Button>
+            </>
+          )}
+          {params.row.OrderStatus === 'Shipping' && (
+            <>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => handleDoneOrder(params.id)}
+                style={{ marginRight: '10px' }}
+              >
+                Done
+              </Button>
+              <Button
+                variant="contained"
+                color="secondary"
+                onClick={() => handleCancelOrder(params.id)}
+              >
+                Cancel
+              </Button>
+            </>
+          )}
+          {['Shipped', 'Cancelled'].includes(params.row.OrderStatus) && (
+            <>
+              <Button
+                variant="contained"
+                disabled
+                style={{ marginRight: '10px' }}
+              >
+                Done
+              </Button>
+              <Button
+                variant="contained"
+                disabled
+              >
+                Cancel
+              </Button>
+            </>
+          )}
+        </div>
+      )
+    }
+  ];  
+
+  // Set initial rows with 'Processing' status
+  const initialRows = [
+    { id: 1, Customer: 'John Doe', OrderDate: '2023-01-01', TotalPrice: 100, StaffID: 101, OrderStatus: 'Processing' },
+    { id: 2, Customer: 'Jane Smith', OrderDate: '2023-01-03', TotalPrice: 200, StaffID: 102, OrderStatus: 'Processing' },
+    { id: 3, Customer: 'Sam Johnson', OrderDate: '2023-01-05', TotalPrice: 300, StaffID: 103, OrderStatus: 'Processing' }
+  ];
+
+  const [searchDate, setSearchDate] = useState('');
+  const [rows, setRows] = useState(initialRows);
+  const { staffAction, setStaffAction } = useContext(StaffActionContext); // Use the context
+
+  const handleStatusChange = (id, newStatus) => {
+    setRows((prevRows) =>
+      prevRows.map((row) =>
+        row.id === id ? { ...row, OrderStatus: newStatus } : row
+      )
+    );
   };
+
+  const handleConfirmOrder = (id) => {
+    setRows((prevRows) =>
+      prevRows.map((row) =>
+        row.id === id ? { ...row, OrderStatus: 'Shipping' } : row
+      )
+    );
+  };
+
+  const handleCancelOrder = (id) => {
+    setRows((prevRows) =>
+      prevRows.map((row) =>
+        row.id === id ? { ...row, OrderStatus: 'Cancelled' } : row
+      )
+    );
+  };
+
+  const handleDoneOrder = (id) => {
+    setRows((prevRows) =>
+      prevRows.map((row) =>
+        row.id === id ? { ...row, OrderStatus: 'Shipped' } : row
+      )
+    );
+  };
+
+  const handleSearchChange = (event) => {
+    setSearchDate(event.target.value);
+  };
+
+  const filteredRows = rows.filter((row) => {
+    return row.OrderDate.includes(searchDate);
+  });
+
   return (
-    <div
-      onMouseEnter={() => setDetails(true)}
-      onMouseLeave={() => setDetails(false)}
-      className={`w-full h-[5.5em] mt-5 flex justify-around items-center bg-box rounded-3xl ${
-        order ? "hidden" : ""
-      }`}
-    >
-      <div
-        style={{
-          backgroundImage: `url('https://www.berganza.com/timthumb.php?wm=0&src=https%3A%2F%2Fwww.berganza.com%2Fimages%2Fjewellery%2Fjewelleryitemphoto_19200_12.jpg&h=768')`,
+    <div style={{ height: 500, width: '100%' }}>
+      <Box sx={{ mb: 2 }}>
+        <TextField
+          label="Search by Order Date"
+          variant="outlined"
+          value={searchDate}
+          onChange={handleSearchChange}
+        />
+      </Box>
+      <DataGrid
+        rows={filteredRows}
+        columns={columns}
+        initialState={{
+          pagination: {
+            paginationModel: { page: 0, pageSize: 5 },
+          },
         }}
-        className="w-[17%] h-[85%] rounded-xl bg-cover bg-center"
-      ></div>
-      <div className="w-[60%] overflow-hidden">
-        <div className="text-ellipsis overflow-hidden whitespace-nowrap">
-          Vintage Ceylon Sapphire
-        </div>
-        <div className="">VND 956,207,100</div>
-      </div>
-      <div
-        onClick={() => setOrder(true)}
-        className={`hover:text-green-700 cursor-pointer`}
-      >
-        <ion-icon size="large" name="checkmark-circle-outline"></ion-icon>
-      </div>
-      {/* Order details */}
-      <div
-        className={`fixed bottom-7 left-4 z-[-1] rounded-2xl flex flex-col justify-around  ${
-          details ? "translate-x-full" : ""
-        } w-[32vw] h-[63.5vh] bg-main transition-all duration-500`}
-      >
-        <div className="w-full float-right">
-          <DeliveryProgress activeStep={activeStep} />
-          <div
-            onClick={handleNext}
-            className={`translate-x-9 hover:bg-main hover:text-green-700 border-[0.1em] px-6 py-2 w-24 text-center mt-5 ${
-              activeStep === 4 ? "bg-main pointer-events-none" : "bg-green-700"
-            } cursor-pointer`}
-          >
-            {activeStep === 3 ? "Done" : "Next"}
-          </div>
-        </div>
-        {/* Order information */}
-        <div className="translate-x-9 -translate-y-10">
-          <div className="">Product: Vintage Ceylon Sapphire</div>
-          <div className="">Price: VND 956,207,100</div>
-          <div className="">Quantity: 1</div>
-          <div className="">To: Ho Chi Minh City</div>
-          <div className="">Shipping: Free</div>
-          <div className="">Total: đ956,207,100</div>
-          <div
-            className={`w-[85%] h-10 flex items-center indent-5 mt-4 rounded-full ${
-              activeStep === 4 ? "bg-green-500" : "bg-red-400"
-            }`}
-          >
-            Process: {activeStep === 4 ? "Complete" : steps[activeStep]}
-          </div>
-        </div>
-      </div>
+        pageSizeOptions={[5, 10]}
+        checkboxSelection
+      />
     </div>
   );
-}
+};

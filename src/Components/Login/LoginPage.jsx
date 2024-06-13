@@ -8,11 +8,17 @@ export default function LoginPage() {
 
   const handleLogin = async (email, password) => {
     try {
-      const response = await axios.post("API_ENDPOINT_URL", {
-        email,
-        password,
-      });
+      // const response = await axios.post("API_ENDPOINT_URL", {
+      //   email,
+      //   password,
+      // });
+      if (email === "staff1@gmail.com" && password === "password123") {
+        navigate("/SaleStaffPage");
+      }
 
+      if (email === "shipper1@gmail.com" && password === "password123") {
+        navigate("/DeliStaffPage");
+      }
       // Giả sử token được trả về trong response.data.token
       const token = response.data.token;
 
@@ -103,7 +109,7 @@ export default function LoginPage() {
               </label>
               {/* Submit */}
               <button
-                onClick={() => navigate("/AdminPage")}
+                
                 type="submit"
                 className="px-10 py-3 border-red-600 border-[0.1em] mt-8 text-white uppercase font-bold
              hover:shadow-red-500/50 hover:shadow-xl hover:text-red-500 transition-all duration-300 rounded-lg cursor-pointer"
