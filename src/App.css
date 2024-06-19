@@ -11,7 +11,9 @@ body {
 .active {
   color: green;
 }
-
+.logo {
+  font-family: "Le Major";
+}
 /* code {
   color: #140d21;
 } */
