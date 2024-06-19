@@ -1,51 +1,40 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import Box from '@mui/material/Box';
 import { DataGrid } from '@mui/x-data-grid';
-import { Select, MenuItem, TextField, Button } from '@mui/material';
+import { TextField, Button } from '@mui/material';
+import axios from 'axios';
 import { StaffActionContext } from './StaffActionProvider';
+import SaleOrderDetailModal from './SaleOrderDetailModal';
 
 export const SaleOrder = () => {
-  const { confirmedOrders,setConfirmedOrders, setStaffAction } = useContext(StaffActionContext);
-  console.log(confirmedOrders)
+  const { confirmedOrders, setConfirmedOrders, setStaffAction } = useContext(StaffActionContext);
+  const [rows, setRows] = useState([]);
+  const [searchDate, setSearchDate] = useState('');
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+
   const columns = [
-    { field: 'id', headerName: 'ID', width: 70 },
-    { field: 'Customer', headerName: 'Customer', width: 130 },
+    { field: 'OrderID', headerName: 'ID', width: 70 },
+    { field: 'CustomerName', headerName: 'Customer', width: 130 },
+    { field: 'CustomerPhone', headerName: 'Phone', width: 130 },
     { field: 'OrderDate', headerName: 'Order Date', width: 130 },
-    { field: 'TotalPrice', headerName: 'Total Price', width: 130 },
-    { field: 'ShippingDate', headerName: 'Shipping Date', width: 130 },
-    { field: 'ReceiveDate', headerName: 'Receive Date', width: 130 },
-    { field: 'StaffID', headerName: 'Staff ID', width: 130 },
-    { field: 'ShipperID', headerName: 'Shipper ID', width: 130 },
-    {
-      field: 'Status',
-      headerName: 'Status',
-      width: 160,
-      renderCell: (params) => (
-        <Select
-          value={params.value || 'Processing'} // Default value is 'Processing'
-          onChange={(event) => handleStatusChange(params.id, event.target.value)}
-          fullWidth
-        >
-          <MenuItem value="Processing">Processing</MenuItem>
-          <MenuItem value="Accepted">Accepted</MenuItem>
-          <MenuItem value="Delivering">Delivering</MenuItem>
-          <MenuItem value="Delivered">Delivered</MenuItem>
-          <MenuItem value="Canceled">Canceled</MenuItem>
-        </Select>
-      )
-    },
+    { field: 'Payment', headerName: 'Payment', width: 130 },
+    { field: 'OrderStatus', headerName: 'Status', width: 130 },
+    { field: 'SaleStaff', headerName: 'Staff ', width: 130 },
+    { field: 'Shipper', headerName: 'Shipper ', width: 130 },
+    { field: 'OrderNote', headerName: 'Note'}, 
     {
       field: 'action',
       headerName: 'Action',
       width: 200,
       renderCell: (params) => (
         <div>
-          {params.row.Status === 'Processing' && (
+          {params.row.OrderStatus === 'Processing' && (
             <>
               <Button
                 variant="contained"
                 color="primary"
-                onClick={() => handleConfirmOrder(params.id)}
+                onClick={(event) => { event.stopPropagation(); handleConfirmOrder(params.id); }}
                 style={{ marginRight: '10px' }}
               >
                 Confirm
@@ -53,20 +42,39 @@ export const SaleOrder = () => {
               <Button
                 variant="contained"
                 color="secondary"
-                onClick={() => handleCancelOrder(params.id)}
+                onClick={(event) => { event.stopPropagation(); handleCancelOrder(params.id); }}
               >
                 Cancel
               </Button>
             </>
           )}
-          {['Delivering', 'Accepted', 'Canceled', 'Delivered'].includes(params.row.Status) && (
+          {params.row.OrderStatus === 'Accepted' && (
+            <>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={(event) => { event.stopPropagation(); handleReadyOrder(params.id); }}
+                style={{ marginRight: '10px' }}
+              >
+                Ready
+              </Button>
+              <Button
+                variant="contained"
+                color="secondary"
+                onClick={(event) => { event.stopPropagation(); handleCancelOrder(params.id); }}
+              >
+                Cancel
+              </Button>
+            </>
+          )}
+          {['Pending Delivery', 'Delivering', 'Canceled', 'Delivered'].includes(params.row.OrderStatus) && (
             <>
               <Button
                 variant="contained"
                 disabled
                 style={{ marginRight: '10px' }}
               >
-                Confirm
+                Ready
               </Button>
               <Button
                 variant="contained"
@@ -81,64 +89,130 @@ export const SaleOrder = () => {
     },
   ];
 
-  // Initialize rows with 'Processing' status
-  const initialRows = [
-    { id: 1, Customer: 'John Doe', OrderDate: '2023-01-01', TotalPrice: 100, ShippingDate: '2023-01-02', ReceiveDate: '2023-01-05', StaffID: 101, ShipperID: 201, Status: 'Processing' },
-    { id: 2, Customer: 'Jane Smith', OrderDate: '2023-01-03', TotalPrice: 200, ShippingDate: '2023-01-04', ReceiveDate: '2023-01-06', StaffID: 102, ShipperID: 202, Status: 'Processing' },
-    { id: 3, Customer: 'Sam Johnson', OrderDate: '2023-01-05', TotalPrice: 300, ShippingDate: '2023-01-06', ReceiveDate: '2023-01-08', StaffID: 103, ShipperID: 203, Status: 'Processing' }
-  ];
-
-  const [searchDate, setSearchDate] = useState('');
-  const [rows, setRows] = useState(initialRows);
-
-  // Load confirmedOrders from localStorage on component mount
   useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const response = await axios.get('http://localhost:7292/api/Order/GetOrderInfoListForSaleStaff');
+        const ordersWithId = response.data.map(order => ({ ...order, id: order.OrderID }));
+        setRows(ordersWithId);
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+      }
+    };
+
+    fetchOrders();
+
     const storedConfirmedOrders = localStorage.getItem('confirmedOrders');
     if (storedConfirmedOrders) {
       setConfirmedOrders(JSON.parse(storedConfirmedOrders));
     }
-  }, []);
+  }, [setConfirmedOrders]);
 
-  // Save confirmedOrders to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem('confirmedOrders', JSON.stringify(confirmedOrders));
   }, [confirmedOrders]);
-  
+
   const handleStatusChange = (id, newStatus) => {
     setRows((prevRows) =>
       prevRows.map((row) =>
-        row.id === id ? { ...row, Status: newStatus } : row
+        row.OrderID === id ? { ...row, OrderStatus: newStatus } : row
       )
     );
   };
 
-  const handleConfirmOrder = (id) => {
-    setRows((prevRows) =>
-      prevRows.map((row) =>
-        row.id === id ? { ...row, Status: 'Accepted' } : row
-      )
-    );
-    setConfirmedOrders((prev) => [...prev, id]);
-    setStaffAction('confirm');
+  const handleConfirmOrder = async (id) => {
+    const username = localStorage.getItem('username');
+    const role = localStorage.getItem('role');
+
+    try {
+      const response = await axios.post('http://localhost:7292/api/Order/UpdateOrderStatus', {
+        orderID: id,
+        buttonValue: 'CONFIRM',
+        username,
+        role
+      });
+
+      if (response.status === 200) {
+        setRows((prevRows) =>
+          prevRows.map((row) =>
+            row.OrderID === id ? { ...row, OrderStatus: 'Accepted' } : row
+          )
+        );
+        setConfirmedOrders((prev) => [...prev, id]);
+        setStaffAction('confirm');
+      }
+    } catch (error) {
+      console.error('Error updating order status:', error);
+    }
   };
 
-  const handleCancelOrder = (id) => {
-    setRows((prevRows) =>
-      prevRows.map((row) =>
-        row.id === id ? { ...row, Status: 'Canceled' } : row
-      )
-    );
-    setConfirmedOrders((prev) => prev.filter(orderId => orderId !== id));
-    setStaffAction('cancel');
+  const handleReadyOrder = async (id) => {
+    const username = localStorage.getItem('username');
+    const role = localStorage.getItem('role');
+
+    try {
+      const response = await axios.post('http://localhost:7292/api/Order/UpdateOrderStatus', {
+        orderID: id,
+        buttonValue: 'READY',
+        username,
+        role
+      });
+
+      if (response.status === 200) {
+        setRows((prevRows) =>
+          prevRows.map((row) =>
+            row.OrderID === id ? { ...row, OrderStatus: 'Pending Delivery' } : row
+          )
+        );
+        setConfirmedOrders((prev) => [...prev, id]);
+        setStaffAction('ready');
+      }
+    } catch (error) {
+      console.error('Error updating order status:', error);
+    }
+  };
+
+  const handleCancelOrder = async (id) => {
+    const username = localStorage.getItem('username');
+    const role = localStorage.getItem('role');
+
+    try {
+      const response = await axios.post('http://localhost:7292/api/Order/UpdateOrderStatus', {
+        orderID: id,
+        buttonValue: 'CANCEL',
+        username,
+        role
+      });
+
+      if (response.status === 200) {
+        setRows((prevRows) =>
+          prevRows.map((row) =>
+            row.OrderID === id ? { ...row, OrderStatus: 'Canceled' } : row
+          )
+        );
+        setConfirmedOrders((prev) => prev.filter(orderId => orderId !== id));
+        setStaffAction('cancel');
+      }
+    } catch (error) {
+      console.error('Error updating order status:', error);
+    }
   };
 
   const handleSearchChange = (event) => {
     setSearchDate(event.target.value);
   };
 
-  const filteredRows = rows.filter((row) => {
-    return row.OrderDate.includes(searchDate);
-  });
+  const handleRowClick = (params) => {
+    setSelectedOrder(params.row.OrderID);
+    setModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setSelectedOrder(null);
+  };
+
+  const filteredRows = rows.filter((row) => row.OrderDate.includes(searchDate));
 
   return (
     <div style={{ height: 500, width: '100%' }}>
@@ -153,14 +227,16 @@ export const SaleOrder = () => {
       <DataGrid
         rows={filteredRows}
         columns={columns}
+        getRowId={(row) => row.id}
         initialState={{
           pagination: {
             paginationModel: { page: 0, pageSize: 5 },
           },
         }}
         pageSizeOptions={[5, 10]}
-        checkboxSelection
+        onRowClick={handleRowClick}
       />
+      <SaleOrderDetailModal open={modalOpen} handleClose={handleCloseModal} orderId={selectedOrder} />
     </div>
   );
 };

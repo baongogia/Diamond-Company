@@ -8,6 +8,7 @@ import SaleStaffPage from "./Components/Role/SaleStaff/SaleStaffPage";
 import Hide from "./Components/Hide";
 import ManageListProduct from "./Components/Role/Admin/ManageListProduct";
 import { StaffActionProvider }  from "./Components/Role/SaleStaff/StaffActionProvider";
+import SaleOrderDetailModal from "./Components/Role/SaleStaff/SaleOrderDetailModal";
 
 function App() {
   return (
@@ -21,9 +22,11 @@ function App() {
           <Route path="/DeliStaffPage" element={<DeliStaffPage />} />
           <Route path="/ManagerPage" element={<ManagerPage />} />
           <Route path="/SaleStaffPage" element={<SaleStaffPage />} />
-          <Route path="/ManageListProduct" element={<ManageListProduct />} />
+          <Route path="/ManageListProduct" element={<ManageListProduct />} /> 
+          <Route path="/SaleOrderDetailModal" element={<SaleOrderDetailModal />} />
         </Routes>
       </StaffActionProvider>
+      
     </>
   );
 }

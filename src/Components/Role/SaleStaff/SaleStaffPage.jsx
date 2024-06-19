@@ -18,18 +18,7 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import InboxIcon from '@mui/icons-material/MoveToInbox';
 import MailIcon from '@mui/icons-material/Mail';
-import { Select, MenuItem, TextField } from '@mui/material';
 import { SaleOrder } from './SaleOrder';
-
-
-
-
-
-const initialRows = [
-  { id: 1, Customer: 'John Doe', OrderDate: '2023-01-01', TotalPrice: 100, ShippingDate: '2023-01-02', ReceiveDate: '2023-01-05', StaffID: 101, ShipperID: 201, ShipStatus: 'Shipped' },
-  { id: 2, Customer: 'Jane Smith', OrderDate: '2023-01-03', TotalPrice: 200, ShippingDate: '2023-01-04', ReceiveDate: '2023-01-06', StaffID: 102, ShipperID: 202, ShipStatus: 'Pending' },
-  { id: 3, Customer: 'Sam Johnson', OrderDate: '2023-01-05', TotalPrice: 300, ShippingDate: '2023-01-06', ReceiveDate: '2023-01-08', StaffID: 103, ShipperID: 203, ShipStatus: 'Delivered' }
-];
 
 const drawerWidth = 240;
 
@@ -59,7 +48,6 @@ const DrawerHeader = styled('div')(({ theme }) => ({
   alignItems: 'center',
   justifyContent: 'flex-end',
   padding: theme.spacing(0, 1),
-  // necessary for content to be below app bar
   ...theme.mixins.toolbar,
 }));
 
@@ -99,16 +87,6 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 );
 
 export default function SaleStaffPage() {
-  
-  const [rows, setRows] = React.useState(initialRows);
-  const [searchDate, setSearchDate] = React.useState('');
-  const filteredRows = rows.filter((row) => {
-    return row.OrderDate.includes(searchDate);
-  });
-
-  const handleStatusChange = (id, newStatus) => {
-    setRows(rows.map(row => (row.id === id ? { ...row, ShipStatus: newStatus } : row)));
-  };
   const theme = useTheme();
   const [open, setOpen] = React.useState(false);
 
@@ -121,6 +99,7 @@ export default function SaleStaffPage() {
   };
 
   return (
+    
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
       <AppBar position="fixed" open={open}>
@@ -139,7 +118,7 @@ export default function SaleStaffPage() {
           </IconButton>
           <Typography variant="h6" noWrap component="div">
             Sale Orders
-          </Typography>
+           </Typography>
         </Toolbar>
       </AppBar>
       <Drawer variant="permanent" open={open}>
@@ -149,7 +128,7 @@ export default function SaleStaffPage() {
           </IconButton>
         </DrawerHeader>
         <Divider />
-        <List>
+        {/* <List>
           {['Inbox', 'Starred', 'Send email', 'Drafts'].map((text, index) => (
             <ListItem key={text} disablePadding sx={{ display: 'block' }}>
               <ListItemButton
@@ -172,9 +151,9 @@ export default function SaleStaffPage() {
               </ListItemButton>
             </ListItem>
           ))}
-        </List>
+        </List> */}
         <Divider />
-        <List>
+        {/* <List>
           {['All mail', 'Trash', 'Spam'].map((text, index) => (
             <ListItem key={text} disablePadding sx={{ display: 'block' }}>
               <ListItemButton
@@ -197,11 +176,11 @@ export default function SaleStaffPage() {
               </ListItemButton>
             </ListItem>
           ))}
-        </List>
+        </List> */}
       </Drawer>
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
         <DrawerHeader />
-            <SaleOrder />
+        <SaleOrder />
       </Box>
     </Box>
   );
